@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:movie_searcher/db/movie_db.dart';
 
 import 'package:movie_searcher/models/movie.model.dart';
 
 class MovieView extends StatefulWidget {
-  const MovieView({
-    Key? key,
-    required this.movie,
-  }) : super(key: key);
+  const MovieView({Key? key, required this.movie}) : super(key: key);
 
   final Movie movie;
 
@@ -21,17 +19,36 @@ class _MovieViewState extends State<MovieView> {
   void initState() {
     super.initState();
     movieState = widget.movie;
+    MovieDB db = MovieDB();
+    db.getMovie(movieState.id).then((movie) {
+      setState(() {
+        movieState.favored = movie!.favored;
+      });
+    });
+  }
+
+  void onPressed() {
+    MovieDB db = MovieDB();
+
+    setState(() => movieState.favored = !movieState.favored);
+    movieState.favored == true
+        ? db.addMovie(movieState)
+        : db.removeMovie(movieState.id);
   }
 
   @override
   Widget build(BuildContext context) {
     return ExpansionTile(
+      initiallyExpanded: movieState.isExpanded,
+      onExpansionChanged: (b) => movieState.isExpanded = b,
       leading: IconButton(
-        icon: movieState.favored!
+        icon: movieState.favored
             ? const Icon(Icons.star)
             : const Icon(Icons.star_border),
         color: Colors.white,
-        onPressed: () {},
+        onPressed: () {
+          onPressed();
+        },
       ),
       title: Container(
         height: 200.0,
@@ -67,7 +84,16 @@ class _MovieViewState extends State<MovieView> {
       ),
       children: [
         Container(
-          child: RichText(text: TextSpan(text: movieState.overview)),
+          padding: const EdgeInsets.all(10.0),
+          child: RichText(
+            text: TextSpan(
+              text: movieState.overview,
+              style: const TextStyle(
+                fontSize: 14.0,
+                fontWeight: FontWeight.w300,
+              ),
+            ),
+          ),
         )
       ],
     );
